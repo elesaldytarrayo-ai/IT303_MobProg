@@ -1,258 +1,196 @@
-import React, {
-  useState
-} from "react";
-
+import { useState } from "react";
 import {
-  useExpenses
-} from "./ExpenseContext";
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 
-import "./DailyExpenses.css";
+import { useExpenses } from "./ExpenseContext";
 
-function DailyExpenses() {
+export default function DailyExpenses({ goHome }) {
+  const { addExpense } = useExpenses();
 
-  const { addExpense } =
-    useExpenses();
+  const today = new Date()
+    .toISOString()
+    .slice(0, 10);
 
-  const today =
-    new Date()
-      .toISOString()
-      .slice(0, 10);
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("Food");
+  const [date, setDate] = useState(today);
 
-  const [form, setForm] =
-    useState({
-
-      title: "",
-
-      amount: "",
-
-      category: "Food",
-
-      date: today
-
-    });
-
-  const handleChange = (
-    event
-  ) => {
-
-    const {
-      name,
-      value
-    } = event.target;
-
-    setForm({
-
-      ...form,
-
-      [name]: value
-
-    });
-
-  };
-
-  const handleSubmit = (
-    event
-  ) => {
-
-    event.preventDefault();
-
-    if (!form.title.trim()) {
-
-      alert(
-        "Please enter an expense name."
-      );
-
+  const saveExpense = () => {
+    if (!title.trim()) {
+      Alert.alert("Error", "Enter an expense name.");
       return;
-
     }
 
-    if (
-      !form.amount ||
-      Number(form.amount) <= 0
-    ) {
-
-      alert(
-        "Please enter a valid amount."
-      );
-
+    if (!amount || Number(amount) <= 0) {
+      Alert.alert("Error", "Enter a valid amount.");
       return;
-
     }
 
-    if (!form.date) {
-
-      alert(
-        "Please select a date."
-      );
-
-      return;
-
-    }
-
-    addExpense(form);
-
-    setForm({
-
-      title: "",
-
-      amount: "",
-
-      category: "Food",
-
-      date: today
-
+    addExpense({
+      title,
+      amount,
+      category,
+      date,
     });
 
-    alert(
-      "Expense successfully added!"
+    setTitle("");
+    setAmount("");
+    setCategory("Food");
+    setDate(today);
+
+    Alert.alert(
+      "Success",
+      "Expense added successfully.",
+      [{ text: "OK", onPress: goHome }]
     );
-
   };
 
   return (
+    <View style={styles.container}>
+      <Text style={styles.title}>
+        Add Expense
+      </Text>
 
-    <main className="daily-page">
+      <Text style={styles.label}>
+        Expense Name
+      </Text>
 
-      <section className="expense-form-card">
+      <TextInput
+        style={styles.input}
+        value={title}
+        onChangeText={setTitle}
+        placeholder="Example: Lunch"
+      />
 
-        <div className="form-header">
+      <Text style={styles.label}>
+        Amount
+      </Text>
 
-          <div className="form-logo">
-            💗
-          </div>
+      <TextInput
+        style={styles.input}
+        value={amount}
+        onChangeText={setAmount}
+        placeholder="0.00"
+        keyboardType="decimal-pad"
+      />
 
-          <div>
+      <Text style={styles.label}>
+        Category
+      </Text>
 
-            <p>
-              DAILY EXPENSE
-            </p>
-
-            <h1>
-              Add Expense
-            </h1>
-
-          </div>
-
-        </div>
-
-        <p className="form-description">
-
-          Record your daily spending
-          and keep your budget organized.
-
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="expense-form"
-        >
-
-          <div className="input-group">
-
-            <label>
-              Expense Name
-            </label>
-
-            <input
-              type="text"
-              name="title"
-              value={form.title}
-              onChange={handleChange}
-              placeholder="Example: Lunch"
-            />
-
-          </div>
-
-          <div className="input-group">
-
-            <label>
-              Amount
-            </label>
-
-            <div className="amount-input">
-
-              <span>
-                ₱
-              </span>
-
-              <input
-                type="number"
-                name="amount"
-                value={form.amount}
-                onChange={handleChange}
-                placeholder="0.00"
-                min="0"
-                step="0.01"
-              />
-
-            </div>
-
-          </div>
-
-          <div className="input-group">
-
-            <label>
-              Category
-            </label>
-
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
+      <View style={styles.row}>
+        {["Food", "Transport", "Other"].map(
+          (item) => (
+            <TouchableOpacity
+              key={item}
+              style={[
+                styles.category,
+                category === item &&
+                  styles.selected,
+              ]}
+              onPress={() => setCategory(item)}
             >
+              <Text
+                style={[
+                  styles.categoryText,
+                  category === item &&
+                    styles.white,
+                ]}
+              >
+                {item}
+              </Text>
+            </TouchableOpacity>
+          )
+        )}
+      </View>
 
-              <option value="Food">
-                🍔 Food
-              </option>
+      <Text style={styles.label}>
+        Date
+      </Text>
 
-              <option value="Transport">
-                🚌 Transport
-              </option>
+      <TextInput
+        style={styles.input}
+        value={date}
+        onChangeText={setDate}
+        placeholder="YYYY-MM-DD"
+      />
 
-              <option value="Other">
-                📦 Other
-              </option>
-
-            </select>
-
-          </div>
-
-          <div className="input-group">
-
-            <label>
-              Date
-            </label>
-
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          <button
-            className="submit-button"
-            type="submit"
-          >
-
-            <span>
-              +
-            </span>
-
-            Save Expense
-
-          </button>
-
-        </form>
-
-      </section>
-
-    </main>
-
+      <TouchableOpacity
+        style={styles.button}
+        onPress={saveExpense}
+      >
+        <Text style={styles.buttonText}>
+          Save Expense
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
-
 }
 
-export default DailyExpenses;
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+  },
+  title: {
+    color: "#246BCE",
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  label: {
+    color: "#333333",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  input: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: "#BFD3F2",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  row: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  category: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#BFD3F2",
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  selected: {
+    backgroundColor: "#246BCE",
+  },
+  categoryText: {
+    color: "#246BCE",
+    fontWeight: "bold",
+  },
+  white: {
+    color: "#FFFFFF",
+  },
+  button: {
+    backgroundColor: "#246BCE",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 25,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+});

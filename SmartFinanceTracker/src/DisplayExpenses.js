@@ -1,356 +1,392 @@
-import React, {
-  useState
-} from "react";
-
+import { useState } from "react";
 import {
-  useExpenses
-} from "./ExpenseContext";
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 
-import "./DisplayExpenses.css";
+import { useExpenses } from "./ExpenseContext";
 
-function DisplayExpenses() {
-
+export default function DisplayExpenses({ goHome }) {
   const {
-
     expenses,
-
     updateExpense,
-
     deleteExpense,
-
-    clearExpenses
-
+    clearExpenses,
   } = useExpenses();
 
-  const [edit, setEdit] =
-    useState(null);
+  const [editId, setEditId] = useState(null);
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("Food");
+  const [date, setDate] = useState("");
 
-  const startEdit = (
-    expense
-  ) => {
-
-    setEdit({
-      ...expense
-    });
-
-  };
-
-  const handleEditChange = (
-    event
-  ) => {
-
-    const {
-      name,
-      value
-    } = event.target;
-
-    setEdit({
-
-      ...edit,
-
-      [name]: value
-
-    });
-
+  const editExpense = (item) => {
+    setEditId(item.id);
+    setTitle(item.title);
+    setAmount(String(item.amount));
+    setCategory(item.category);
+    setDate(item.date);
   };
 
   const saveEdit = () => {
-
-    if (!edit.title.trim()) {
-
-      alert(
-        "Expense name cannot be empty."
-      );
-
+    if (!title.trim() || !amount || Number(amount) <= 0) {
+      Alert.alert("Error", "Enter valid information.");
       return;
-
     }
 
-    if (
-      !edit.amount ||
-      Number(edit.amount) <= 0
-    ) {
+    updateExpense(editId, {
+      title,
+      amount,
+      category,
+      date,
+    });
 
-      alert(
-        "Please enter a valid amount."
-      );
+    setEditId(null);
+  };
 
-      return;
-
-    }
-
-    updateExpense(
-      edit.id,
-      edit
+  const removeExpense = (id) => {
+    Alert.alert(
+      "Delete Expense",
+      "Are you sure?",
+      [
+        { text: "Cancel" },
+        {
+          text: "Delete",
+          onPress: () => deleteExpense(id),
+        },
+      ]
     );
-
-    setEdit(null);
-
   };
 
-  const handleDelete = (
-    id
-  ) => {
+  const clearAll = () => {
+    if (expenses.length === 0) return;
 
-    const answer =
-      window.confirm(
-        "Are you sure you want to delete this expense?"
-      );
-
-    if (answer) {
-
-      deleteExpense(id);
-
-    }
-
-  };
-
-  const handleClear = () => {
-
-    if (expenses.length === 0) {
-
-      return;
-
-    }
-
-    const answer =
-      window.confirm(
-        "Delete all expense records?"
-      );
-
-    if (answer) {
-
-      clearExpenses();
-
-    }
-
+    Alert.alert(
+      "Clear All",
+      "Delete all expenses?",
+      [
+        { text: "Cancel" },
+        {
+          text: "Clear",
+          onPress: clearExpenses,
+        },
+      ]
+    );
   };
 
   return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>
+          My Expenses
+        </Text>
 
-    <main className="display-page">
-
-      <section className="display-header">
-
-        <div>
-
-          <p>
-            EXPENSE MANAGEMENT
-          </p>
-
-          <h1>
-            My Expenses
-          </h1>
-
-          <span>
-            View, edit, and delete
-            your expense records.
-          </span>
-
-        </div>
-
-        <button
-          className="clear-button"
-          onClick={handleClear}
+        <TouchableOpacity
+          style={styles.home}
+          onPress={goHome}
         >
-          Clear All
-        </button>
+          <Text style={styles.white}>
+            Home
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      </section>
+      <TouchableOpacity
+        style={styles.clear}
+        onPress={clearAll}
+      >
+        <Text style={styles.clearText}>
+          Clear All
+        </Text>
+      </TouchableOpacity>
 
       {expenses.length === 0 ? (
-
-        <section className="no-expenses">
-
-          <div className="no-expense-icon">
-            🧾
-          </div>
-
-          <h2>
-            No Expenses Found
-          </h2>
-
-          <p>
-            Your expense list is
-            currently empty.
-          </p>
-
-        </section>
-
+        <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>
+            No Expenses
+          </Text>
+          <Text style={styles.hint}>
+            Your expenses appear here.
+          </Text>
+        </View>
       ) : (
+        expenses
+          .slice()
+          .reverse()
+          .map((item) => (
+            <View
+              style={styles.card}
+              key={item.id}
+            >
+              {editId === item.id ? (
+                <View>
+                  <TextInput
+                    style={styles.input}
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="Expense Name"
+                  />
 
-        <section className="expense-list">
+                  <TextInput
+                    style={styles.input}
+                    value={amount}
+                    onChangeText={setAmount}
+                    placeholder="Amount"
+                    keyboardType="decimal-pad"
+                  />
 
-          {expenses
-            .slice()
-            .reverse()
-            .map((expense) => (
+                  <View style={styles.row}>
+                    {[
+                      "Food",
+                      "Transport",
+                      "Other",
+                    ].map((item) => (
+                      <TouchableOpacity
+                        key={item}
+                        style={[
+                          styles.category,
+                          category === item &&
+                            styles.selected,
+                        ]}
+                        onPress={() =>
+                          setCategory(item)
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.categoryText,
+                            category === item &&
+                              styles.white,
+                          ]}
+                        >
+                          {item}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
 
-              <article
-                className="expense-item"
-                key={expense.id}
-              >
+                  <TextInput
+                    style={styles.input}
+                    value={date}
+                    onChangeText={setDate}
+                    placeholder="Date"
+                  />
 
-                {edit &&
-                edit.id === expense.id ? (
+                  <TouchableOpacity
+                    style={styles.save}
+                    onPress={saveEdit}
+                  >
+                    <Text style={styles.white}>
+                      Save Changes
+                    </Text>
+                  </TouchableOpacity>
 
-                  <div className="edit-form">
+                  <TouchableOpacity
+                    style={styles.cancel}
+                    onPress={() => setEditId(null)}
+                  >
+                    <Text style={styles.cancelText}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View>
+                  <View style={styles.info}>
+                    <View style={styles.details}>
+                      <Text style={styles.itemTitle}>
+                        {item.title}
+                      </Text>
 
-                    <input
-                      name="title"
-                      value={edit.title}
-                      onChange={
-                        handleEditChange
-                      }
-                    />
+                      <Text style={styles.hint}>
+                        {item.category} • {item.date}
+                      </Text>
+                    </View>
 
-                    <input
-                      name="amount"
-                      type="number"
-                      value={edit.amount}
-                      onChange={
-                        handleEditChange
-                      }
-                    />
+                    <Text style={styles.amount}>
+                      ₱{Number(item.amount).toFixed(2)}
+                    </Text>
+                  </View>
 
-                    <select
-                      name="category"
-                      value={edit.category}
-                      onChange={
-                        handleEditChange
+                  <View style={styles.buttons}>
+                    <TouchableOpacity
+                      style={styles.edit}
+                      onPress={() =>
+                        editExpense(item)
                       }
                     >
-
-                      <option value="Food">
-                        Food
-                      </option>
-
-                      <option value="Transport">
-                        Transport
-                      </option>
-
-                      <option value="Other">
-                        Other
-                      </option>
-
-                    </select>
-
-                    <input
-                      name="date"
-                      type="date"
-                      value={edit.date}
-                      onChange={
-                        handleEditChange
-                      }
-                    />
-
-                    <div className="edit-buttons">
-
-                      <button
-                        className="save-button"
-                        onClick={saveEdit}
-                      >
-                        Save
-                      </button>
-
-                      <button
-                        className="cancel-button"
-                        onClick={() =>
-                          setEdit(null)
-                        }
-                      >
-                        Cancel
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                ) : (
-
-                  <>
-
-                    <div className="expense-category-icon">
-
-                      {expense.category ===
-                      "Food"
-
-                        ? "🍔"
-
-                        : expense.category ===
-                          "Transport"
-
-                        ? "🚌"
-
-                        : "📦"}
-
-                    </div>
-
-                    <div className="expense-details">
-
-                      <h3>
-                        {expense.title}
-                      </h3>
-
-                      <p>
-                        {expense.category}
-                        {" • "}
-                        {expense.date}
-                      </p>
-
-                    </div>
-
-                    <strong className="expense-amount">
-
-                      ₱
-                      {Number(
-                        expense.amount
-                      ).toFixed(2)}
-
-                    </strong>
-
-                    <div className="action-buttons">
-
-                      <button
-                        className="edit-button"
-                        onClick={() =>
-                          startEdit(
-                            expense
-                          )
-                        }
-                      >
+                      <Text style={styles.editText}>
                         Edit
-                      </button>
+                      </Text>
+                    </TouchableOpacity>
 
-                      <button
-                        className="delete-button"
-                        onClick={() =>
-                          handleDelete(
-                            expense.id
-                          )
-                        }
-                      >
+                    <TouchableOpacity
+                      style={styles.delete}
+                      onPress={() =>
+                        removeExpense(item.id)
+                      }
+                    >
+                      <Text style={styles.white}>
                         Delete
-                      </button>
-
-                    </div>
-
-                  </>
-
-                )}
-
-              </article>
-
-            ))}
-
-        </section>
-
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          ))
       )}
-
-    </main>
-
+    </View>
   );
-
 }
 
-export default DisplayExpenses;
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  title: {
+    color: "#246BCE",
+    fontSize: 26,
+    fontWeight: "bold",
+  },
+  home: {
+    backgroundColor: "#246BCE",
+    padding: 10,
+    borderRadius: 8,
+  },
+  white: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+  },
+  clear: {
+    borderWidth: 1,
+    borderColor: "#246BCE",
+    backgroundColor: "#FFFFFF",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  clearText: {
+    color: "#246BCE",
+    fontWeight: "bold",
+  },
+  empty: {
+    backgroundColor: "#FFFFFF",
+    padding: 35,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  emptyTitle: {
+    color: "#333333",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  hint: {
+    color: "#888888",
+    fontSize: 11,
+    marginTop: 4,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#D9E5F5",
+  },
+  info: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  details: {
+    flex: 1,
+  },
+  itemTitle: {
+    color: "#333333",
+    fontWeight: "bold",
+  },
+  amount: {
+    color: "#246BCE",
+    fontWeight: "bold",
+  },
+  buttons: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  edit: {
+    flex: 1,
+    backgroundColor: "#E8F1FF",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  editText: {
+    color: "#246BCE",
+    fontWeight: "bold",
+  },
+  delete: {
+    flex: 1,
+    backgroundColor: "#246BCE",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  input: {
+    height: 45,
+    borderWidth: 1,
+    borderColor: "#BFD3F2",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  row: {
+    flexDirection: "row",
+    gap: 6,
+    marginBottom: 8,
+  },
+  category: {
+    flex: 1,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#BFD3F2",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  selected: {
+    backgroundColor: "#246BCE",
+  },
+  categoryText: {
+    color: "#246BCE",
+    fontSize: 11,
+    fontWeight: "bold",
+  },
+  save: {
+    backgroundColor: "#246BCE",
+    padding: 11,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  cancel: {
+    backgroundColor: "#E8F1FF",
+    padding: 11,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 7,
+  },
+  cancelText: {
+    color: "#246BCE",
+    fontWeight: "bold",
+  },
+});

@@ -1,262 +1,122 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
-  useState
+  useState,
 } from "react";
 
-import "./ExpenseContext.css";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const ExpenseContext =
-  createContext();
+const ExpenseContext = createContext();
+const STORAGE_KEY = "PERSONAL_EXPENSES";
 
-const STORAGE_KEY =
-  "personal_expense_tracker";
-
-export function ExpenseProvider({
-  children
-}) {
-
-  const [expenses, setExpenses] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
+export function ExpenseProvider({ children }) {
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
-    try {
-
-      const saved =
-        localStorage.getItem(
-          STORAGE_KEY
-        );
-
-      if (saved) {
-
-        const parsed =
-          JSON.parse(saved);
-
-        if (Array.isArray(parsed)) {
-          setExpenses(parsed);
-        }
-
-      }
-
-    } catch (error) {
-
-      console.log(
-        "Unable to load expenses:",
-        error
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
+    loadExpenses();
   }, []);
 
   useEffect(() => {
-
-    if (!loading) {
-
-      try {
-
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(expenses)
-        );
-
-      } catch (error) {
-
-        console.log(
-          "Unable to save expenses:",
-          error
-        );
-
-      }
-
-    }
-
+    if (!loading) saveExpenses(expenses);
   }, [expenses, loading]);
 
-  const addExpense = (expense) => {
+  const loadExpenses = async () => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEY);
 
-    const newExpense = {
-
-      id:
-        Date.now() +
-        Math.random(),
-
-      title:
-        expense.title.trim(),
-
-      amount:
-        Number(expense.amount),
-
-      category:
-        expense.category,
-
-      date:
-        expense.date
-
-    };
-
-    setExpenses(
-      (currentExpenses) => [
-        ...currentExpenses,
-        newExpense
-      ]
-    );
-
+      if (data) {
+        setExpenses(JSON.parse(data));
+      }
+    } catch (error) {
+      console.log("Load error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateExpense = (
-    id,
-    updatedExpense
-  ) => {
+  const saveExpenses = async (data) => {
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(data)
+      );
+    } catch (error) {
+      console.log("Save error:", error);
+    }
+  };
 
-    setExpenses(
-      (currentExpenses) =>
+  const addExpense = (item) => {
+    const newExpense = {
+      id: Date.now().toString(),
+      title: item.title.trim(),
+      amount: Number(item.amount),
+      category: item.category,
+      date: item.date,
+    };
 
-        currentExpenses.map(
-          (expense) =>
+    setExpenses((old) => [...old, newExpense]);
+  };
 
-            expense.id === id
-
-              ? {
-                  ...expense,
-                  title:
-                    updatedExpense.title.trim(),
-                  amount:
-                    Number(
-                      updatedExpense.amount
-                    ),
-                  category:
-                    updatedExpense.category,
-                  date:
-                    updatedExpense.date
-                }
-
-              : expense
-        )
-
+  const updateExpense = (id, item) => {
+    setExpenses((old) =>
+      old.map((expense) =>
+        expense.id === id
+          ? {
+              ...expense,
+              title: item.title.trim(),
+              amount: Number(item.amount),
+              category: item.category,
+              date: item.date,
+            }
+          : expense
+      )
     );
-
   };
 
   const deleteExpense = (id) => {
-
-    setExpenses(
-      (currentExpenses) =>
-
-        currentExpenses.filter(
-          (expense) =>
-            expense.id !== id
-        )
-
+    setExpenses((old) =>
+      old.filter((item) => item.id !== id)
     );
-
   };
 
   const clearExpenses = () => {
-
     setExpenses([]);
-
   };
 
-  const total =
-    expenses.reduce(
-      (sum, expense) =>
-        sum +
-        Number(expense.amount),
-      0
-    );
-
-  const foodTotal =
-    expenses
+  const totalBy = (category) => {
+    return expenses
       .filter(
-        (expense) =>
-          expense.category === "Food"
+        (item) =>
+          !category || item.category === category
       )
       .reduce(
-        (sum, expense) =>
-          sum +
-          Number(expense.amount),
+        (sum, item) => sum + Number(item.amount),
         0
       );
-
-  const transportTotal =
-    expenses
-      .filter(
-        (expense) =>
-          expense.category ===
-          "Transport"
-      )
-      .reduce(
-        (sum, expense) =>
-          sum +
-          Number(expense.amount),
-        0
-      );
-
-  const otherTotal =
-    expenses
-      .filter(
-        (expense) =>
-          expense.category === "Other"
-      )
-      .reduce(
-        (sum, expense) =>
-          sum +
-          Number(expense.amount),
-        0
-      );
-
-  const value = {
-
-    expenses,
-
-    loading,
-
-    addExpense,
-
-    updateExpense,
-
-    deleteExpense,
-
-    clearExpenses,
-
-    total,
-
-    foodTotal,
-
-    transportTotal,
-
-    otherTotal
-
   };
 
   return (
-
     <ExpenseContext.Provider
-      value={value}
+      value={{
+        expenses,
+        loading,
+        addExpense,
+        updateExpense,
+        deleteExpense,
+        clearExpenses,
+        total: totalBy(),
+        foodTotal: totalBy("Food"),
+        transportTotal: totalBy("Transport"),
+        otherTotal: totalBy("Other"),
+      }}
     >
-
       {children}
-
     </ExpenseContext.Provider>
-
   );
-
 }
 
 export function useExpenses() {
-
-  return useContext(
-    ExpenseContext
-  );
-
+  return useContext(ExpenseContext);
 }
