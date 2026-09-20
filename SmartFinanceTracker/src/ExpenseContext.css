@@ -1,0 +1,82 @@
+.expense-context {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.storage-status {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #3978ff;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 8px 25px rgba(
+    55,
+    83,
+    170,
+    0.15
+  );
+}
+
+.storage-status.saved {
+  border: 1px solid #dbe5ff;
+}
+
+.storage-status.loading {
+  color: #e94b9b;
+  border: 1px solid #ffe0ef;
+}
+
+.context-message {
+  width: 90%;
+  max-width: 500px;
+  margin: 50px auto;
+  padding: 30px;
+  text-align: center;
+  border-radius: 25px;
+  background: #ffffff;
+  box-shadow: 0 15px 35px rgba(
+    55,
+    83,
+    170,
+    0.1
+  );
+}
+
+.context-message h2 {
+  color: #3978ff;
+  margin-bottom: 10px;
+}
+
+.context-message p {
+  color: #8c94ac;
+  line-height: 1.6;
+}
+
+.context-blue {
+  color: #3978ff;
+}
+
+.context-pink {
+  color: #e94b9b;
+}
+
+.context-purple {
+  color: #7865dc;
+}
+
+@media (max-width: 600px) {
+  .storage-status {
+    right: 12px;
+    bottom: 12px;
+    font-size: 11px;
+  }
+
+  .context-message {
+    width: 92%;
+    padding: 25px;
+  }
+}
