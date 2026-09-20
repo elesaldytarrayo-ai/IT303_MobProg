@@ -27,6 +27,7 @@ function Expense() {
           <nav className="navbar">
 
             <div className="logo">
+
               <span className="logo-blue">
                 Pink
               </span>
@@ -34,6 +35,7 @@ function Expense() {
               <span className="logo-pink">
                 Budget
               </span>
+
             </div>
 
             <div className="nav-links">
